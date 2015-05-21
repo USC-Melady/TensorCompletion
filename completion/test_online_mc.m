@@ -73,3 +73,10 @@ end
 
 %% evaluate
 fprintf('The relative recovery error is: %d\n', norm(X-X_c,'fro')/norm(X,'fro'))
+
+%% compare with full matrix completion
+Omega = find(Omega==1);
+data = X(Omega);
+[U,S,V,numiter] = SVT(sz,Omega,data,tau,delta,maxiter,tol);
+X_c2 = U*S*V'
+fprintf('The relative recovery error is: %d\n', norm(X-X_c2,'fro')/norm(X,'fro'))
