@@ -4,7 +4,7 @@ n1 = 100; n2 = 200;
 sz = [n1, n2];
 X = rand(sz);
 % low rank projection
-r = 5;
+r = 20;
 n = prod(sz); % total number of entries
 p = 0.65; %log(n)* r/n;
 [U, S, V] = svd(X);
@@ -56,7 +56,7 @@ Omega(Omega>1)= 1;
 
 %% trim degree
 
-
+tic;
 % construct adjacent matrix
 G = sparse([I,J+n1],[J+n1,I], 1, n1+n2, n1+n2);
 G = full(G);
@@ -74,7 +74,7 @@ while( ~isempty(v))
     degree = sum(G);
     v = setdiff(v_s, find(degree < r ));    
     v_s = [v_s, v];
-    disp(length(v_s));
+%     disp(length(v_s));
 end
 
 if(length(v_s) ==size(G,1))
@@ -131,6 +131,7 @@ for i = 1: m
     col_idx =  submat_idx{i,2};
     n1_i = length(row_idx);
     n2_i = length(col_idx);
+    fprintf('component %d X %d \n', n1_i,n2_i);
     Omega_i=  Omega( row_idx, col_idx);
     Omega_i_ind = find(Omega_i==1); % must be linear index
     Xi = X(row_idx,col_idx);
@@ -140,22 +141,23 @@ for i = 1: m
     Xi_c = U*S*V';
     X_c(row_idx, col_idx) = Xi_c;   
 end
-
+runtime_1= toc;
 
 %% compare with full matrix completion
+
 Omega_ind = find(Omega==1);
 data = X(Omega_ind);
-[U,S,V,numiter] = SVT(sz,Omega_ind,data,tau,delta,maxiter,tol);
+[U,S,V,~] = SVT(sz,Omega_ind,data,tau,delta,maxiter,tol);
 X_c2 = U*S*V';
 
+runtime_2 = toc;
 
 %% evaluate
 rmse_1 = eval_RMSE( X, X_c, submat_idx );
-fprintf('The relative recovery error is: %d\n',rmse_1 );
+fprintf('RMSE submatrix: %d, run time: %d \n',rmse_1, runtime_1 );
 
 rmse_2 = eval_RMSE( X, X_c2, submat_idx );
-fprintf('The relative recovery error is: %d\n', rmse_2)
-
+fprintf('RMSE full: %d, run_time: %d \n', rmse_2, runtime_2);
 
 % TD: overlapp components
 % TD: compare with adaptive mc
