@@ -4,9 +4,9 @@ n1 = 100; n2 = 200;
 sz = [n1, n2];
 X = rand(sz);
 % low rank projection
-r = 50;
+r = 5;
 n = prod(sz); % total number of entries
-p = log(n)* r/n;
+p = 0.65; %log(n)* r/n;
 [U, S, V] = svd(X);
 S(r+1:end,r+1:end)=0;
 X = U*S*V';
@@ -58,7 +58,7 @@ Omega(Omega>1)= 1;
 
 
 % construct adjacent matrix
-G = sparse([I,I+n2],[J+n1,J], 1, n1+n2, n1+n2);
+G = sparse([I,J+n1],[J+n1,I], 1, n1+n2, n1+n2);
 G = full(G);
 
 
@@ -116,16 +116,17 @@ for i = 1:K
     n_i = length(blk_idx);
     if (n_i ==1)
         continue;
-    end
-    
+    end  
     row_idx = {blk_idx(blk_idx<=n1)};
     col_idx = {blk_idx(blk_idx>n1)-n1};
     submat_idx = [submat_idx;row_idx, col_idx];
 end
 
+m = size(submat_idx,1);
+fprintf('%d connnected components found\n', m);
 
 % optmization
-for i = 1: size(submat_idx,1)
+for i = 1: m
     row_idx =  submat_idx{i,1};
     col_idx =  submat_idx{i,2};
     n1_i = length(row_idx);
@@ -140,15 +141,20 @@ for i = 1: size(submat_idx,1)
     X_c(row_idx, col_idx) = Xi_c;   
 end
 
-%% evaluate
-fprintf('The relative recovery error is: %d\n', norm(X-X_c,'fro')/norm(X,'fro'))
 
 %% compare with full matrix completion
 Omega_ind = find(Omega==1);
 data = X(Omega_ind);
 [U,S,V,numiter] = SVT(sz,Omega_ind,data,tau,delta,maxiter,tol);
 X_c2 = U*S*V';
-fprintf('The relative recovery error is: %d\n', norm(X-X_c2,'fro')/norm(X,'fro'))
+
+
+%% evaluate
+rmse_1 = eval_RMSE( X, X_c, submat_idx );
+fprintf('The relative recovery error is: %d\n',rmse_1 );
+
+rmse_2 = eval_RMSE( X, X_c2, submat_idx );
+fprintf('The relative recovery error is: %d\n', rmse_2)
 
 
 % TD: overlapp components
