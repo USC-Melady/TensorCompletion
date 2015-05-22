@@ -5,21 +5,35 @@ sz = [n1, n2];
 X = rand(sz);
 % low rank projection
 r = 50;
+n = prod(sz); % total number of entries
+p = log(n)* r/n;
 [U, S, V] = svd(X);
 S(r+1:end,r+1:end)=0;
 X = U*S*V';
 
-n = prod(sz); % total number of entries
-k = ceil (0.65 * n );
-Omega_ind = randsample(n, k );  %observed entries
-Omega = zeros(n1,n2);
-Omega(Omega_ind) = 1;
+%(1) uniform random
+% k = ceil (ratio * n );
+% Omega_ind = randsample(n, k );  %observed entries
+% Omega = zeros(n1,n2);
+% Omega(Omega_ind) = 1;
+% [I,J] = ind2sub(sz,Omega_ind);
 
-% construct adjacent matrix
+%(2) block overlapp
+Omega = zeros(n1, n2);
 
-[I,J] = ind2sub(sz,Omega_ind);
-G = sparse([I,I+n2],[J+n1,J], 1, n1+n2, n1+n2);
-G = full(G);
+n1_tmp = 20;
+Omega_ind_tmp = randsample(n1_tmp *n2, ceil(p *n1_tmp *n2 ));
+Omega_tmp = zeros(n1_tmp, n2);
+Omega_tmp(Omega_ind_tmp) = 1;
+Omega(1:n1_tmp, :) = Omega_tmp;
+
+n2_tmp = 30;
+Omega_ind_tmp = randsample(n1*n2_tmp, ceil (p * n1*n2_tmp) );
+Omega_tmp = zeros(n1, n2_tmp);
+Omega_tmp(Omega_ind_tmp) = 1;
+Omega(:, 1:n2_tmp) =  Omega(:, 1:n2_tmp) + Omega_tmp;
+[I, J] = find(Omega>0);
+Omega(Omega>1)= 1;
 
 % simulate observed entries 
 % % non-overlapping
@@ -41,16 +55,30 @@ G = full(G);
 % 
 
 %% trim degree
+
+
+% construct adjacent matrix
+G = sparse([I,I+n2],[J+n1,J], 1, n1+n2, n1+n2);
+G = full(G);
+
+
+v_s = []; % set of removed vertices
 degree = sum(G);
 v = find(degree < r );
-while( ~isempty(v)   && ~isempty(G))
+v_s=[v_s,v];
+while( ~isempty(v))
     % remove vertex
     G(v,:) = 0;
     G(:,v) = 0; 
     % check degree
     degree = sum(G);
-    v = find(degree < r ); 
-    disp(length(v));
+    v = setdiff(v_s, find(degree < r ));    
+    v_s = [v_s, v];
+    disp(length(v_s));
+end
+
+if(length(v_s) ==size(G,1))
+    fprintf('No completable submatrix\n');
 end
 
 %% find strongly-connected component
