@@ -1,9 +1,49 @@
-function [ X_c ] = admm_solver( X, submat_idx )
+function [ X, Z, obj] = admm_solver( M,Omega, submat_idx, lambda, rho,max_iter )
 %ADMM_SOLVER Summary of this function goes here
 %   Detailed explanation goes here
+% M is the full matrix
+% Omega is the linear indexing 
 
-% solve X
-% sove
+m = size(submat_idx,1); %number of components
+
+% initialize
+Y = cell(m,1); % dual variable 
+X = cell(m,1); % auxiliary variables for each part
+Z = M; % auxiliary varible for complete
+for i = 1:m
+     row_idx = submat_idx{i,1};
+     col_idx = submat_idx{i,2};
+     X{i} = Z(row_idx, col_idx);
+     Z
+end
+
+for iter = 1: max_iter
+% solve for each X_i separately
+    for i = 1:m
+        row_idx = submat_idx{i,1};
+        col_idx = submat_idx{i,2};
+        X_i_tmp = Z(row_idx, col_idx);
+        X{i} = shrink(X_i_tmp - Y{i}, 1/rho); 
+    end
+% solve Z: closed form solution
+    for i = 1:m
+        row_idx = submat_idx{i,1};
+        col_idx = submat_idx{i,2};
+        tmp = 2* lambda* M.* Omega;
+        tmp = tmp (row_idx, col_idx);
+        Z(row_idx,col_idx) = 2* lambda  * M .* Omega +...
+                            rho * (X{i} + Y{i} );
+    end
+     
+% update Y
+    for i = 1:m
+        row_idx = submat_idx{i,1};
+        col_idx = submat_idx{i,2};
+        Y{i} = Y{i}  + (X{i} - Z(row_idx, col_idx) );
+    end
+
+end
+
 
 end
 

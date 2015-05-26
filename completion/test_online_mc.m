@@ -1,5 +1,8 @@
-clear; clc;
+clear; 
+clc;
+
 %% gen data
+
 n1 = 100; n2 = 200;
 sz = [n1, n2];
 X = rand(sz);
