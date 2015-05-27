@@ -1,6 +1,5 @@
 clear; 
 clc;
-
 %% gen data
 
 n1 = 100; n2 = 200;
@@ -108,7 +107,7 @@ delta = 1.2/p;
    i.e. if it diverges, try a smaller delta (e.g. delta < 2 is a 
    safe choice, but the algorithm may be slower than necessary).
 %}
-maxiter = 500; 
+maxiter = 100; 
 tol = 1e-4;
 
 X_c = zeros(sz);
@@ -147,13 +146,16 @@ end
 runtime_1= toc;
 
 %% compare with full matrix completion
-
 Omega_ind = find(Omega==1);
 data = X(Omega_ind);
 [U,S,V,~] = SVT(sz,Omega_ind,data,tau,delta,maxiter,tol);
 X_c2 = U*S*V';
-
 runtime_2 = toc;
+
+
+[U,S,V,~] = SVT(sz,Omega_ind,data,tau,delta,maxiter,tol);
+X_c3 = U*S*V';
+runtime_3 = toc;
 
 %% evaluate
 rmse_1 = eval_RMSE( X, X_c, submat_idx );
@@ -161,6 +163,9 @@ fprintf('RMSE submatrix: %d, run time: %d \n',rmse_1, runtime_1 );
 
 rmse_2 = eval_RMSE( X, X_c2, submat_idx );
 fprintf('RMSE full: %d, run_time: %d \n', rmse_2, runtime_2);
+
+rmse_3 = eval_RMSE( X, X_c3, submat_idx );
+fprintf('RMSE full: %d, run_time: %d \n', rmse_3, runtime_3);
 
 % TD: overlapp components
 % TD: compare with adaptive mc
