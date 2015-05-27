@@ -16,11 +16,11 @@ m = size(submat_idx,1); %number of components
 % initialize
 Y = cell(m,1); % dual variable 
 X = cell(m,1); % auxiliary variables for each part
-Z = M; % auxiliary varible for complete
+Z = zeros(size(M)); % auxiliary varible for complete
 for i = 1:m
      row_idx = submat_idx{i,1};
      col_idx = submat_idx{i,2};
-     X{i} = rand(length(row_idx), length(col_idx));
+     X{i} = zeros(length(row_idx), length(col_idx));
      Y{i} = zeros(length(row_idx), length(col_idx));
 end
 
@@ -36,14 +36,17 @@ for iter = 1: max_iter
         tmp = Z(row_idx, col_idx);
         X{i} = shrink(tmp - Y{i}, 1/rho); 
     end
-% solve Z: closed form solution
+% solve Z: closed form solution for each i
     for i = 1:m
         row_idx = submat_idx{i,1};
         col_idx = submat_idx{i,2};
-        tmp = 2* lambda* M.* Omega;
-        tmp = tmp (row_idx, col_idx);
-        Z(row_idx,col_idx) = tmp +...
-                            rho * (X{i} + Y{i} );
+        M_i = M(row_idx, col_idx);
+        Omega_i = Omega(row_idx, col_idx);
+        tmp =  (2*lambda* M_i+ rho * X{i} + rho * Omega_i.*Y{i});
+        tmp = tmp/ (2*lambda + rho);
+        missing_idx = find(Omega_i==0);
+        tmp(missing_idx) = X{i}(missing_idx);
+        Z(row_idx,col_idx) = tmp;
     end
      
 % update Y

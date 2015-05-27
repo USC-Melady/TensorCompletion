@@ -15,7 +15,7 @@ for i = 1:m
     row_idx = submat_idx{i,1};
     col_idx = submat_idx{i,2};
     t3 = t3 + trace(Y{i}' * (X{i}- Z(row_idx, col_idx)));
-    t3 = t3 + 0.5* norm(X{i}-Z(row_idx, col_idx),'fro');    
+    t3 = t3 + 0.5* norm(X{i}-Z(row_idx, col_idx),'fro')^2;    
 end
 t3 = rho*t3;
 
