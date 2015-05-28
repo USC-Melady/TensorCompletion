@@ -92,7 +92,7 @@ for iter = 1: maxiter
     if (stop_criterion< tol)
         break
     end
-    obj(iter)= stop_criterion;
+    obj(iter)= 
     Z_old = Z;
 end
 if VERBOSE==1, fprintf('\n'); end

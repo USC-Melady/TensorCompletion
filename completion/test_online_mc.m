@@ -2,7 +2,7 @@ clear;
 clc;
 %% gen data
 
-n1 = 100; n2 = 200;
+n1 = 500; n2 = 800;
 sz = [n1, n2];
 X = rand(sz);
 % low rank projection
@@ -87,7 +87,9 @@ end
 
 graph = sparse(G);
 [K,C] = graphconncomp(graph); % BUG: too many singletons
-
+%%
+Omega_ind = find(Omega==1);
+data = X(Omega_ind);
 %% optimization
 
 df = r*(n1+n2-r);
@@ -146,17 +148,27 @@ end
 runtime_1= toc;
 
 %% compare with full matrix completion
-Omega_ind = find(Omega==1);
-data = X(Omega_ind);
+tic;
 [U,S,V,~] = SVT(sz,Omega_ind,data,tau,delta,maxiter,tol);
 X_c2 = U*S*V';
 runtime_2 = toc;
 
 %% admm solver
-lambda = 1e-1;
-rho = 10;
-[~, X_c3, obj] = admm_solver(X,Omega, submat_idx, lambda, rho,maxiter );
+tic;
+lambda = 1e1;
+rho = 1.5e-2;
+[X_c3,~, obj] = admm_solver(sz,Omega_ind, data, submat_idx, lambda, rho,maxiter );
 runtime_3 = toc;
+
+%% adaptive mc
+tic;
+p_n = 1-p;
+data_mat = zeros(sz);
+data_mat(Omega_ind) = data;
+
+[X_c4,  Obs] = mc_exact_adapt(data_mat,p_n);
+runtime_4 = toc;
+
 %% evaluate
 rmse_1 = eval_RMSE( X, X_c, submat_idx );
 fprintf('RMSE submatrix: %d, run time: %d \n',rmse_1, runtime_1 );
@@ -167,8 +179,9 @@ fprintf('RMSE full: %d, run_time: %d \n', rmse_2, runtime_2);
 rmse_3 = eval_RMSE( X, X_c3, submat_idx );
 fprintf('RMSE admm: %d, run_time: %d \n', rmse_3, runtime_3);
 
-% TD: overlapp components
-% TD: compare with adaptive mc
+rmse_4 = eval_RMSE( X, X_c4, submat_idx );
+fprintf('RMSE adaptive: %d, run_time: %d \n', rmse_4, runtime_4);
+
 % TD: generalize to tensor
 
 

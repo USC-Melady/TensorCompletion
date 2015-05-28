@@ -3,7 +3,7 @@ clc;
 global VERBOSE;
 VERBOSE =1;
 %% gen data
-n1 = 100; n2 = 200;
+n1 = 300; n2 = 500;
 sz = [n1, n2];
 M = rand(sz);
 % low rank projection
@@ -78,8 +78,10 @@ for i = 1:K
 end
 
 %% admm
-lambda = 1e-1;
-rho = 10;
+lambda = 1e1;
+rho = 1e-2;
 max_iter = 500;
-[X, Z, obj] = admm_solver( M,Omega, submat_idx, lambda, rho,max_iter );
-plot(obj);
+
+Omega_ind = find(Omega>0);
+data = M(Omega_ind);
+[Z, X, obj] = admm_solver(sz,Omega_ind,data, submat_idx, lambda, rho,max_iter );
