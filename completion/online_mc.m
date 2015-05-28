@@ -1,6 +1,8 @@
-function [ output_args ] = online_mc( input_args )
-%ONLINE_MC Summary of this function goes here
-%   Detailed explanation goes here
+function [ X_c ] = online_mc( X )
+%ONLINE_MC Summary:
+
+
+
 
 
 end

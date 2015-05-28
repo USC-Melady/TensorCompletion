@@ -2,7 +2,7 @@ clear;
 clc;
 %% gen data
 
-n1 = 500; n2 = 800;
+n1 = 1000; n2 = 2000;
 sz = [n1, n2];
 X = rand(sz);
 % low rank projection
@@ -169,7 +169,7 @@ data_mat(Omega_ind) = data;
 [X_c4,  Obs] = mc_exact_adapt(data_mat,p_n);
 runtime_4 = toc;
 
-%% evaluate
+%% evaluate completable parts
 rmse_1 = eval_RMSE( X, X_c, submat_idx );
 fprintf('RMSE submatrix: %d, run time: %d \n',rmse_1, runtime_1 );
 
@@ -181,7 +181,18 @@ fprintf('RMSE admm: %d, run_time: %d \n', rmse_3, runtime_3);
 
 rmse_4 = eval_RMSE( X, X_c4, submat_idx );
 fprintf('RMSE adaptive: %d, run_time: %d \n', rmse_4, runtime_4);
+%% evaluate complete matrix
+rmse_1 = norm(X-X_c,'fro')/norm(X,'fro');
+fprintf('RMSE submatrix: %d \n',rmse_1 );
 
+rmse_2 = norm(X-X_c2,'fro')/norm(X,'fro');
+fprintf('RMSE full: %d \n',rmse_2 );
+
+rmse_3 = norm(X-X_c3,'fro')/norm(X,'fro');
+fprintf('RMSE admm: %d \n',rmse_3 );
+
+rmse_4 = norm(X-X_c4,'fro')/norm(X,'fro');
+fprintf('RMSE adaptive: %d \n',rmse_4 );
 % TD: generalize to tensor
 
 
