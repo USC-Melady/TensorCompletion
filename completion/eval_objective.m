@@ -1,4 +1,4 @@
-function [ obj_val ] = eval_objective( X,Y,Z,M,Omega, submat_idx, lambda, rho )
+function [ obj_val ] = eval_objective( X,Z,Omega,data, lambda)
 %EVAL_OBJECTIVE : evaluate objective function of 
 % lambda/2 \| P_\Omega(Z) - P_\Omega(M)\|_F^2 + \sum_{i=1}^m \|X_i\|_*
 % subject to X_i = P_{\Omega_i}(Z)
@@ -9,7 +9,7 @@ t1= 0;
 for i = 1:m
     t1 = t1 +  trace_norm (X{i});
 end
-t2 = 0.5* lambda * norm(( Z-M ) .* Omega, 'fro')^2;
+t2 = 0.5* lambda * norm( Z(Omega)- data , 'fro')^2;
 
 
 % t3 =0;

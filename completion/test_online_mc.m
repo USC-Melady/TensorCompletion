@@ -107,7 +107,7 @@ delta = 1.2/p;
    i.e. if it diverges, try a smaller delta (e.g. delta < 2 is a 
    safe choice, but the algorithm may be slower than necessary).
 %}
-maxiter = 100; 
+maxiter = 500; 
 tol = 1e-4;
 
 X_c = zeros(sz);
@@ -152,11 +152,11 @@ data = X(Omega_ind);
 X_c2 = U*S*V';
 runtime_2 = toc;
 
-
-[U,S,V,~] = SVT(sz,Omega_ind,data,tau,delta,maxiter,tol);
-X_c3 = U*S*V';
+%% admm solver
+lambda = 1e-1;
+rho = 10;
+[~, X_c3, obj] = admm_solver(X,Omega, submat_idx, lambda, rho,maxiter );
 runtime_3 = toc;
-
 %% evaluate
 rmse_1 = eval_RMSE( X, X_c, submat_idx );
 fprintf('RMSE submatrix: %d, run time: %d \n',rmse_1, runtime_1 );
@@ -165,7 +165,7 @@ rmse_2 = eval_RMSE( X, X_c2, submat_idx );
 fprintf('RMSE full: %d, run_time: %d \n', rmse_2, runtime_2);
 
 rmse_3 = eval_RMSE( X, X_c3, submat_idx );
-fprintf('RMSE full: %d, run_time: %d \n', rmse_3, runtime_3);
+fprintf('RMSE admm: %d, run_time: %d \n', rmse_3, runtime_3);
 
 % TD: overlapp components
 % TD: compare with adaptive mc
