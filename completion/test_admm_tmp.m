@@ -8,7 +8,7 @@ rand('state',2009);
 % if you're daring, try with complex numbers:
 COMPLEX = false;
 
-n1 = 150; n2 = 300; r = 10;
+n1 = 800; n2 = 500; r = 10;
 if COMPLEX
     M = (randn(n1,r)+1i*randn(n1,r))*(randn(r,n2)+1i*randn(r,n2))/2;
 else
@@ -68,6 +68,8 @@ fprintf('The relative error on Omega is: %d\n', norm(data-X(Omega))/norm(data))
 fprintf('The relative recovery error is: %d\n', norm(M-X,'fro')/norm(M,'fro'))
 fprintf('The relative recovery in the spectral norm is: %d\n', norm(M-X)/norm(M))
 %% ADMM
+fprintf('\nSolving by ADMM...\n');
+
 submat_idx = cell(1,2);
 submat_idx{1,1}= 1:n1;
 submat_idx{1,2}= 1:n2;
@@ -76,8 +78,9 @@ RelError = [];
 rho = 1e-2;
 lambda = 1e3;
 max_iter = 100;
+tic
 [X, ~, obj] = admm_solver([n1,n2], Omega, data , submat_idx, lambda, rho,max_iter );
-
+toc
 % Show results
 fprintf('rho %d\n',rho);
 fprintf('The relative error on Omega is: %d\n', norm(data-X(Omega))/norm(data))

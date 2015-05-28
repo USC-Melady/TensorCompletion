@@ -34,8 +34,9 @@ m = size(submat_idx,1); %number of components
 % initialize
 Y = cell(m,1); % dual variable 
 X = cell(m,1); % auxiliary variables for each part
-Z = rand(sz); % auxiliary varible for complete
+Z = zeros(sz); % auxiliary varible for complete
 P = zeros(sz); % Submatrix Projection
+
 
 Z_old = Z;
 for i = 1:m
@@ -45,6 +46,11 @@ for i = 1:m
      Y{i} = zeros(length(row_idx), length(col_idx));
      P(row_idx, col_idx) = P(row_idx,col_idx) +1;
 end
+completable_ind = find(P>=1);
+intersect_ind = intersect(Omega, completable_ind);
+ind_1 = setdiff(Omega, intersect_ind); % observed, not completable
+ind_2 = setdiff(completable_ind, intersect_ind); % unobserved, completable
+
 
 if VERBOSE==1, fprintf('\nIteration:   '); end
 
@@ -55,8 +61,8 @@ for iter = 1: maxiter
     for i = 1:m
         row_idx = submat_idx{i,1};
         col_idx = submat_idx{i,2};
-        tmp = Z(row_idx, col_idx);
-        X{i} = shrink(tmp - 1/rho* Y{i}, 1/rho); 
+        X{i} = Z(row_idx, col_idx);
+        X{i} = shrink(X{i} - 1/rho* Y{i}, 1/rho); 
     end
 % solve Z: closed form solution for each i
     tmp = zeros(sz);
@@ -68,15 +74,8 @@ for iter = 1: maxiter
     tmp(Omega) = tmp(Omega) +  lambda * b;
     % branching
     Z = zeros(sz);% unobserved and imcompletable: zero
-    completable_ind = find(P>=1);
-    
-    intersect_ind = intersect(Omega, completable_ind);
-    Z(intersect_ind)  = tmp(intersect_ind)./(lambda + rho * P(intersect_ind));% observed and completable
-    
-    ind_1 = setdiff(Omega, intersect_ind); % observed, not completable
+    Z(intersect_ind)  = tmp(intersect_ind)./(lambda + rho * P(intersect_ind));% observed and completable   
     Z(ind_1) = tmp(ind_1)/(lambda);
-
-    ind_2 = setdiff(completable_ind, intersect_ind); % unobserved, completable
     Z(ind_2) = tmp(ind_2)/(rho);
      
 % update Y
