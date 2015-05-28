@@ -5,10 +5,7 @@ function [ X, Z, obj] = admm_solver( M,Omega, submat_idx, lambda, rho,max_iter )
 % Omega: mask matrix [n1, n2], 1 denotes observed, 0 otherwise
 % submat_idx: m x 2 cell array of m completable components, 
               % first column row indice, second column column indice
-% lambda: positive number, Lagrange multiplier
-% rho: positive number, augmented Lagrange multiplier
-% max_iter: max number of iteration
-
+% lambda: 
 global VERBOSE
 if isempty(VERBOSE)
     % -- feel free to change these 'verbosity' parameters

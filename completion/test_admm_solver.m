@@ -78,8 +78,8 @@ for i = 1:K
 end
 
 %% admm
-lambda = 1e-2;
-rho = 0.5;
-max_iter = 200;
+lambda = 1e-1;
+rho = 10;
+max_iter = 500;
 [X, Z, obj] = admm_solver( M,Omega, submat_idx, lambda, rho,max_iter );
 plot(obj);
