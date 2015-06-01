@@ -1,17 +1,7 @@
-function [Z,X, obj] = admm_solver(sz,Omega, b, submat_idx, lambda, rho, maxiter, tol )
-%ADMM_SOLVER: ADMM solver for graph-based matrix completion
-% Input
-% sz: size of the orignal matrix [n1,n2]
-% Omega: linear indice of observed entries
-% data: observed entries corresponding to position in Omega
-% submat_idx: m x 2 cell array of m completable components, 
-              % first column row indice, second column column indice
-% lambda: positive number, Lagrange multiplier: larger lambda, faster,
-            % lower error on Omega
-      
-% rho: positive number, augmented Lagrange multiplier: smaller rho, lower
-            % recover error 
-% max_iter: max number of iteration
+function [ Z,X, obj ] = admm_solver_tensor( sz,Omega, b, submat_idx, lambda, rho, maxiter, tol )
+%ADMM_SOLVER_TENSOR : tensor completion algorithm using ADM
+%generalizeion using tensor package
+
 
 global VERBOSE
 if isempty(VERBOSE)
@@ -29,22 +19,30 @@ if nargin < 7 || isempty(maxiter)
 end
 
 obj = zeros(maxiter+1,1);
-m = size(submat_idx,1); %number of components
+[m,N] = size(submat_idx); %number of components, dimension of a tensor
 
 % initialize
-Y = cell(m,1); % dual variable 
-X = cell(m,1); % auxiliary variables for each part
-Z = zeros(sz); % auxiliary varible for complete
-P = zeros(sz); % Submatrix Projection
+Y = cell(m,N); % dual variable 
+X = cell(m,N); % auxiliary variables for each part
+Z = tenzeros(sz); % auxiliary varible for complete
+P = tenzeros(sz); % Submatrix Projection
 
 
 Z_old = Z;
 for i = 1:m
-     row_idx = submat_idx{i,1};
-     col_idx = submat_idx{i,2};
-     X{i} = zeros(length(row_idx), length(col_idx));
-     Y{i} = zeros(length(row_idx), length(col_idx));
-     P(row_idx, col_idx) = P(row_idx,col_idx) +1;
+    subs = [];
+    subs_len = zeros(1,N);
+    for n = 1:N
+     subs = [subs,submat_idx{i,n}];
+     subs_len(n) =length(submat_idx{i,n});
+    end
+    
+    for n = 1:N
+     X{i,n} = tenzeros(subs_len);
+     Y{i,n} = tenzeros(subs_len);
+    end
+    
+     P(subs) = P(subs) +1;%extract subtensor
 end
 completable_ind = find(P>=1);
 intersect_ind = intersect(Omega, completable_ind);
@@ -59,8 +57,9 @@ for iter = 1: maxiter
 
 % solve for each X_i separately
     for i = 1:m
-        row_idx = submat_idx{i,1};
-        col_idx = submat_idx{i,2};
+        for n = 1:N
+        row_idx = submat_idx{i,n};
+        end
         X{i} = Z(row_idx, col_idx);
         X{i} = shrink(X{i} - 1/rho* Y{i}, 1/rho); 
     end
@@ -76,7 +75,7 @@ for iter = 1: maxiter
     Z = zeros(sz);% unobserved and imcompletable: zero
     Z(intersect_ind)  = tmp(intersect_ind)./(lambda + rho * P(intersect_ind));% observed and completable   
     Z(ind_1) = tmp(ind_1)/(lambda);
-    Z(ind_2) = tmp(ind_2)./(rho* P(ind_2));
+    Z(ind_2) = tmp(ind_2)/(rho);
      
 % update Y
     for i = 1:m
@@ -96,6 +95,7 @@ for iter = 1: maxiter
     Z_old = Z;
 end
 if VERBOSE==1, fprintf('\n'); end
+
 
 end
 

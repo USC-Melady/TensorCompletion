@@ -9,3 +9,4 @@ G(G > p) =1;
 G(G <=p ) = 0;
 
 submat_idx = find_comp([n1,n2], sparse(G), seed, r, d);
+
