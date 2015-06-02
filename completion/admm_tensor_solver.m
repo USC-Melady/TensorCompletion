@@ -1,7 +1,6 @@
-function [ Z,X, obj ] = admm_solver_tensor( sz,Omega, b, submat_idx, lambda, rho, maxiter, tol )
+function [ Z,X,obj] = admm_tensor_solver( sz,Omega, b, sub_idx, lambda, rho, maxiter, tol )
 %ADMM_SOLVER_TENSOR : tensor completion algorithm using ADM
 %generalizeion using tensor package
-
 
 global VERBOSE
 if isempty(VERBOSE)
@@ -19,30 +18,29 @@ if nargin < 7 || isempty(maxiter)
 end
 
 obj = zeros(maxiter+1,1);
-[m,N] = size(submat_idx); %number of components, dimension of a tensor
+[m,N] = size(sub_idx); %number of components, dimension of a tensor
 
 % initialize
-Y = cell(m,N); % dual variable 
+Y = cell(m,N); % dual variable , N is three for now
 X = cell(m,N); % auxiliary variables for each part
 Z = tenzeros(sz); % auxiliary varible for complete
 P = tenzeros(sz); % Submatrix Projection
 
 
 Z_old = Z;
+
 for i = 1:m
-    subs = [];
-    subs_len = zeros(1,N);
+    sub_sz = zeros(1,N);
     for n = 1:N
-     subs = [subs,submat_idx{i,n}];
-     subs_len(n) =length(submat_idx{i,n});
+       sub_sz(n) =length(sub_idx{i,n});
     end
     
     for n = 1:N
-     X{i,n} = tenzeros(subs_len);
-     Y{i,n} = tenzeros(subs_len);
+      X{i,n} = tenzeros(sub_sz);
+      Y{i,n} = tenzeros(sub_sz);
     end
     
-     P(subs) = P(subs) +1;%extract subtensor
+    P(sub_idx{1}, sub_idx{2}, sub_idx{3}) = P(sub_idx{1}, sub_idx{2}, sub_idx{3}) +1;% extract subtensor
 end
 completable_ind = find(P>=1);
 intersect_ind = intersect(Omega, completable_ind);
@@ -55,33 +53,36 @@ if VERBOSE==1, fprintf('\nIteration:   '); end
 for iter = 1: maxiter
     if VERBOSE==1, fprintf('\b\b\b\b%4d',iter);  end
 
-% solve for each X_i separately
-    for i = 1:m
+   % solve for each X_i separallel
+   for i = 1:m
         for n = 1:N
-        row_idx = submat_idx{i,n};
+            Z_sub = Z(sub_idx{1}, sub_idx{2}, sub_idx{3});
+            % mode n unfolding of Z
+            Z_sub_n = tenmat(Z_sub,n);
+            Y_n = tenmat(Y{i,n},n);
+            X_sub_n = shrink(Z_sub_n.data - 1/rho* Y_n.data, 1/rho); 
+            X{i,n} = tensor (X_sub_n, sz);
         end
-        X{i} = Z(row_idx, col_idx);
-        X{i} = shrink(X{i} - 1/rho* Y{i}, 1/rho); 
     end
 % solve Z: closed form solution for each i
-    tmp = zeros(sz);
+    tmp = tenzeros(sz);
     for i = 1:m
-        row_idx = submat_idx{i,1};
-        col_idx = submat_idx{i,2};
-        tmp(row_idx,col_idx) = tmp(row_idx, col_idx) + rho * X{i} + Y{i};      
+        for n = 1:N
+           tmp(sub_idx{1}, sub_idx{2}, sub_idx{3}) = tmp(sub_idx{1}, sub_idx{2}, sub_idx{3}) + rho * X{i,n} + Y{i,n};      
+        end
     end
     tmp(Omega) = tmp(Omega) +  lambda * b;
     % branching
-    Z = zeros(sz);% unobserved and imcompletable: zero
-    Z(intersect_ind)  = tmp(intersect_ind)./(lambda + rho * P(intersect_ind));% observed and completable   
+    Z = tenzeros(sz);% unobserved and imcompletable: zero
+    Z(intersect_ind)  = tmp(intersect_ind)./(lambda + N* rho * P(intersect_ind));% observed and completable   
     Z(ind_1) = tmp(ind_1)/(lambda);
-    Z(ind_2) = tmp(ind_2)/(rho);
+    Z(ind_2) = tmp(ind_2)/(N*rho);
      
 % update Y
     for i = 1:m
-        row_idx = submat_idx{i,1};
-        col_idx = submat_idx{i,2};
-        Y{i} = Y{i}  + rho * (X{i} - Z(row_idx, col_idx) );
+        for n = 1:n
+        Y{i,n} = Y{i,n}  + rho * (X{i,n} - Z(sub_idx{1}, sub_idx{2}, sub_idx{3}) );
+        end
     end
     % objective funciton 
     % obj(iter+1) = eval_objective(X,Z,Omega,b, lambda);
@@ -94,8 +95,7 @@ for iter = 1: maxiter
     obj(iter)= stop_criterion;
     Z_old = Z;
 end
+
 if VERBOSE==1, fprintf('\n'); end
-
-
 end
 
