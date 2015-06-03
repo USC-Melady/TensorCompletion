@@ -2,7 +2,7 @@ clear;
 clc;
 %% gen data
 
-n1 = 1000; n2 = 2000;
+n1 = 100; n2 = 200;
 sz = [n1, n2];
 X = rand(sz);
 % low rank projection
