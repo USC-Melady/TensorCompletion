@@ -20,16 +20,24 @@ for iter = 1: maxiter
     for n = 1:N
         tmp = tmp + Y{n} + rho * Z{n};
     end
+    
     X(Omega) = ( tmp(Omega) + lambda * b ) ./ ( lambda + N *rho) ;
     X(ind_2) =  tmp(ind_2)./ (N*rho);
+    
     for n = 1:N
         X_n = tenmat(X,n);
         X_n = X_n.data;
         Y_n = tenmat(Y{n},n);
         Y_n = Y_n.data;
-        Z{n} = refold(shrink(X_n - 1/rho * Y_n ,1/rho ), n, sz);
+        Z_n = shrink(X_n - 1/rho * Y_n ,1/rho );
+        Z{n} = refold(Z_n, n, sz);
+    end
+    
+    
+    for n = 1:N
         Y{n} = Y{n} + rho * (Z{n} -X );
     end
+    
     obj(iter) = norm(X - X_old) / norm(X_old);
     X_old = X;
 end
